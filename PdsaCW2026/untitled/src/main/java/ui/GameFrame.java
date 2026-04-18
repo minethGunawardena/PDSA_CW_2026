@@ -23,7 +23,7 @@ public class GameFrame extends JFrame {
                 add(new TrafficSimulationPanel());
                 break;
             case "Knight's Tour":
-                //add(new KnightsTourPanel());
+                add(new KnightTourPanel());
                 break;
             case "16 Queens":
                 //add(new QueensPanel());
