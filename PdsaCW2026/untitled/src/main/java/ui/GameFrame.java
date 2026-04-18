@@ -20,7 +20,7 @@ public class GameFrame extends JFrame {
                 add(new SnakeLadderPanel());
                 break;
             case "Traffic Simulation":
-                //add(new TrafficPanel());
+                add(new TrafficSimulationPanel());
                 break;
             case "Knight's Tour":
                 //add(new KnightsTourPanel());
