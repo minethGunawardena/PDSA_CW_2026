@@ -4,7 +4,9 @@ import algorithms.chess.KnightTourHeuristic;
 import database.DBHelper;
 
 import javax.swing.*;
+import javax.swing.border.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Random;
 
 public class KnightTourPanel extends JPanel {
@@ -23,54 +25,124 @@ public class KnightTourPanel extends JPanel {
     private int step = 0;
     private boolean animating = false;
 
+    // ================= THEME COLORS =================
+    private static final Color BG_DARK      = new Color(30, 30, 30);
+    private static final Color BG_DARKER    = new Color(20, 20, 20);
+    private static final Color BG_PANEL     = new Color(40, 40, 40);
+    private static final Color ACCENT_GOLD  = new Color(241, 196, 15);
+    private static final Color ACCENT_BLUE  = new Color(52, 152, 219);
+    private static final Color ACCENT_RED   = new Color(231, 76, 60);
+    private static final Color TEXT_WHITE   = Color.WHITE;
+    private static final Color TEXT_DIM     = new Color(180, 180, 180);
+    private static final Color BORDER_COLOR = new Color(60, 60, 60);
+
+    private static final Color CELL_LIGHT   = new Color(50, 50, 60);
+    private static final Color CELL_DARK    = new Color(35, 35, 45);
+    private static final Color CELL_VISITED = new Color(44, 80, 130);
+    private static final Color CELL_KNIGHT  = new Color(231, 76, 60);
+
     public KnightTourPanel() {
 
-        setLayout(new BorderLayout());
-        setBackground(new Color(18, 18, 18));
-        setOpaque(true);
+        setLayout(new BorderLayout(10, 10));
+        setBackground(BG_DARK);
+        setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // ================= TOP =================
-        JPanel top = new JPanel(new GridLayout(2, 2, 5, 5));
-        top.setBackground(new Color(18, 18, 18));
+        // ================= TOP: TITLE + CONTROLS =================
+        JPanel topPanel = new JPanel(new BorderLayout(10, 8));
+        topPanel.setBackground(BG_DARK);
+        topPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+
+        JLabel titleLabel = new JLabel("Knight's Tour", SwingConstants.CENTER);
+        titleLabel.setFont(loadPixelFont(22f));
+        titleLabel.setForeground(ACCENT_GOLD);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+
+        JPanel controlsRow = new JPanel(new GridLayout(1, 4, 8, 0));
+        controlsRow.setBackground(BG_DARK);
+
+        JLabel nameLabel = new JLabel("Player Name:");
+        nameLabel.setFont(loadPixelFont(13f));
+        nameLabel.setForeground(TEXT_DIM);
 
         nameField = new JTextField();
+        nameField.setFont(loadPixelFont(13f));
+        nameField.setBackground(new Color(50, 50, 50));
+        nameField.setForeground(TEXT_WHITE);
+        nameField.setCaretColor(ACCENT_GOLD);
+        nameField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR, 1),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+        ));
+
+        JLabel sizeLabel = new JLabel("Board Size:");
+        sizeLabel.setFont(loadPixelFont(13f));
+        sizeLabel.setForeground(TEXT_DIM);
+
         sizeBox = new JComboBox<>(new Integer[]{8, 16});
+        sizeBox.setFont(loadPixelFont(13f));
+        sizeBox.setBackground(new Color(50, 50, 50));
+        sizeBox.setForeground(TEXT_WHITE);
+        sizeBox.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
+        sizeBox.setRenderer(new DefaultListCellRenderer() {
+            public Component getListCellRendererComponent(JList<?> list, Object value,
+                                                          int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setBackground(isSelected ? ACCENT_GOLD : new Color(50, 50, 50));
+                setForeground(isSelected ? BG_DARK : TEXT_WHITE);
+                setFont(loadPixelFont(13f));
+                return this;
+            }
+        });
 
-        styleField(nameField);
-        styleField(sizeBox);
+        controlsRow.add(nameLabel);
+        controlsRow.add(nameField);
+        controlsRow.add(sizeLabel);
+        controlsRow.add(sizeBox);
 
-        top.add(styledLabel("Player Name:"));
-        top.add(nameField);
+        topPanel.add(titleLabel, BorderLayout.NORTH);
+        topPanel.add(controlsRow, BorderLayout.CENTER);
 
-        top.add(styledLabel("Board Size:"));
-        top.add(sizeBox);
+        add(topPanel, BorderLayout.NORTH);
 
-        add(top, BorderLayout.NORTH);
-
-        // ================= BOARD =================
+        // ================= CENTER: BOARD =================
         boardPanel = new JPanel();
-        boardPanel.setBackground(new Color(18, 18, 18));
+        boardPanel.setBackground(BG_DARKER);
         boardPanel.setOpaque(true);
+        boardPanel.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
 
         add(boardPanel, BorderLayout.CENTER);
 
-        // ================= OUTPUT =================
+        // ================= SOUTH: OUTPUT LOG =================
         output = new JTextArea(5, 30);
         output.setEditable(false);
-        styleOutput(output);
+        output.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        output.setBackground(BG_DARKER);
+        output.setForeground(ACCENT_GOLD);
+        output.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        output.setLineWrap(true);
+        output.setWrapStyleWord(true);
 
         JScrollPane scroll = new JScrollPane(output);
-        scroll.setBorder(null);
-        scroll.getViewport().setBackground(new Color(25, 25, 25));
+        scroll.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR, 1),
+                "  Game Log  ",
+                TitledBorder.LEFT,
+                TitledBorder.TOP,
+                loadPixelFont(11f),
+                TEXT_DIM
+        ));
+        scroll.getViewport().setBackground(BG_DARKER);
+        scroll.getVerticalScrollBar().setBackground(BG_PANEL);
 
         add(scroll, BorderLayout.SOUTH);
 
-        // ================= BUTTONS =================
-        JButton runBtn = styledButton("Run Tour");
-        JButton animBtn = styledButton("Animate");
+        // ================= WEST: BUTTONS =================
+        JButton runBtn  = styledButton("▶  Run Tour",  ACCENT_BLUE);
+        JButton animBtn = styledButton("⟳  Animate",   ACCENT_GOLD);
 
-        JPanel btnPanel = new JPanel();
-        btnPanel.setBackground(new Color(18, 18, 18));
+        JPanel btnPanel = new JPanel(new GridLayout(2, 1, 0, 12));
+        btnPanel.setBackground(BG_DARK);
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 12));
 
         btnPanel.add(runBtn);
         btnPanel.add(animBtn);
@@ -83,90 +155,56 @@ public class KnightTourPanel extends JPanel {
         startRound();
     }
 
-    // ================= FONT =================
-    private Font loadPixelFont(float size) {
-        try {
-            Font font = Font.createFont(Font.TRUETYPE_FONT,
-                    new java.io.File("src/fonts/Minecraft.ttf"));
-            return font.deriveFont(size);
-        } catch (Exception e) {
-            return new Font("Monospaced", Font.BOLD, (int) size);
-        }
-    }
-
-    // ================= STYLE HELPERS =================
-    private void styleField(JComponent c) {
-        c.setFont(loadPixelFont(13f));
-        c.setBackground(new Color(40, 40, 40));
-        c.setForeground(Color.WHITE);
-        c.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
-    }
-
-    private void styleOutput(JTextArea ta) {
-        ta.setFont(loadPixelFont(13f));
-        ta.setBackground(new Color(25, 25, 25));
-        ta.setForeground(Color.WHITE);
-    }
-
-    private JButton styledButton(String text) {
-        JButton b = new JButton(text);
-        b.setFont(loadPixelFont(13f));
-        b.setBackground(new Color(60, 60, 60));
-        b.setForeground(Color.WHITE);
-        b.setFocusPainted(false);
-        return b;
-    }
-
-    // ⭐ FIXED LABEL METHOD
-    private JLabel styledLabel(String text) {
-        JLabel label = new JLabel(text);
-        label.setFont(loadPixelFont(13f));
-        label.setForeground(Color.WHITE);
-        return label;
-    }
-
     // ================= INIT =================
     private void startRound() {
-
         N = (int) sizeBox.getSelectedItem();
         board = new int[N][N];
+        for (int[] row : board) Arrays.fill(row, -1); // ✔ FIX: init to -1
 
         currentRoundId = DBHelper.insertRound("KnightTour");
 
-        output.setText("Knight Tour Ready (" + N + "x" + N + ")\n");
+        output.setText("▶ Knight's Tour Ready (" + N + " x " + N + ")\n");
+        output.append("  Select a size and press Run Tour or Animate.\n");
+        output.append("────────────────────────────────────\n");
 
         drawBoard(-1);
     }
 
     // ================= RUN =================
     private void runGame() {
-
         try {
             String name = nameField.getText().trim();
 
             if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Enter name!");
+                JOptionPane.showMessageDialog(this, "Enter your player name first!",
+                        "Missing Name", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             N = (int) sizeBox.getSelectedItem();
             board = new int[N][N];
+            for (int[] row : board) Arrays.fill(row, -1); // ✔ FIX: init to -1
 
             int r = new Random().nextInt(N);
             int c = new Random().nextInt(N);
 
             output.setText("");
-            output.append("Start: (" + r + "," + c + ")\n\n");
+            output.append("▶ NEW ROUND\n");
+            output.append("  Start : (" + r + ", " + c + ")\n");
 
             long t1 = System.nanoTime();
-
             boolean success = KnightTourHeuristic.solve(N, r, c, board);
-
             long t2 = System.nanoTime();
 
             DBHelper.insertTime(currentRoundId, "Heuristic", (t2 - t1));
 
-            output.append("Result: " + success + "\n");
+            if (success) {
+                output.append("  ✔ Full tour completed!\n");
+            } else {
+                output.append("  ✘ Tour incomplete.\n");
+            }
+
+            output.append("────────────────────────────────────\n");
 
             int playerId = DBHelper.getOrCreatePlayer(name);
             DBHelper.savePlayerAnswer(playerId, currentRoundId, 1, success);
@@ -180,11 +218,11 @@ public class KnightTourPanel extends JPanel {
 
     // ================= ANIMATION =================
     private void startAnimation() {
-
         if (animating) return;
 
         N = (int) sizeBox.getSelectedItem();
         board = new int[N][N];
+        for (int[] row : board) Arrays.fill(row, -1); // ✔ FIX: init to -1
 
         int r = new Random().nextInt(N);
         int c = new Random().nextInt(N);
@@ -192,32 +230,32 @@ public class KnightTourPanel extends JPanel {
         boolean ok = KnightTourHeuristic.solve(N, r, c, board);
 
         if (!ok) {
-            JOptionPane.showMessageDialog(this, "No full tour found!");
+            JOptionPane.showMessageDialog(this, "No full tour found — try again!",
+                    "Tour Failed", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        output.setText("Animating Knight Tour...\n");
+        output.setText("⟳ Animating Knight's Tour...\n");
+        output.append("────────────────────────────────────\n");
 
         step = 0;
         animating = true;
 
         timer = new Timer(120, e -> {
-
             drawBoard(step);
             step++;
-
             if (step >= N * N) {
                 timer.stop();
                 animating = false;
+                output.append("  ✔ Animation complete!\n");
             }
         });
 
         timer.start();
     }
 
-    // ================= DRAW =================
+    // ================= DRAW BOARD =================
     private void drawBoard(int highlight) {
-
         boardPanel.removeAll();
         boardPanel.setLayout(new GridLayout(N, N));
 
@@ -225,28 +263,32 @@ public class KnightTourPanel extends JPanel {
             for (int j = 0; j < N; j++) {
 
                 JLabel cell = new JLabel();
-
                 int val = board[i][j];
 
                 cell.setHorizontalAlignment(SwingConstants.CENTER);
-                cell.setFont(loadPixelFont(12f));
-                cell.setForeground(Color.WHITE);
-                cell.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+                cell.setFont(loadPixelFont(N <= 8 ? 12f : 8f));
+                cell.setOpaque(true);
+                cell.setBorder(BorderFactory.createLineBorder(BG_DARK, 1));
 
                 if (val == -1) {
+                    // ✔ FIX: only -1 is unvisited, 0 is a valid first step
+                    boolean light = (i + j) % 2 == 0;
+                    cell.setBackground(light ? CELL_LIGHT : CELL_DARK);
+                    cell.setForeground(TEXT_DIM);
                     cell.setText("");
-                    cell.setOpaque(true);
-                    cell.setBackground(new Color(18, 18, 18));
-                }
-                else if (val == highlight) {
+                } else if (val == highlight) {
+                    cell.setBackground(CELL_KNIGHT);
+                    cell.setForeground(TEXT_WHITE);
                     cell.setText("♞");
-                    cell.setOpaque(true);
-                    cell.setBackground(new Color(255, 60, 60));
-                }
-                else {
-                    cell.setText(String.valueOf(val));
-                    cell.setOpaque(true);
-                    cell.setBackground(new Color(50, 80, 120));
+                } else if (highlight == -1 || val <= highlight) {
+                    cell.setBackground(CELL_VISITED);
+                    cell.setForeground(TEXT_WHITE);
+                    cell.setText(N <= 8 ? String.valueOf(val) : "");
+                } else {
+                    boolean light = (i + j) % 2 == 0;
+                    cell.setBackground(light ? CELL_LIGHT : CELL_DARK);
+                    cell.setForeground(TEXT_DIM);
+                    cell.setText("");
                 }
 
                 boardPanel.add(cell);
@@ -255,5 +297,42 @@ public class KnightTourPanel extends JPanel {
 
         boardPanel.revalidate();
         boardPanel.repaint();
+    }
+
+    // ================= BUTTON STYLE =================
+    private JButton styledButton(String text, Color color) {
+        JButton btn = new JButton(text);
+        btn.setFont(loadPixelFont(13f));
+        btn.setForeground(TEXT_WHITE);
+        btn.setBackground(color);
+        btn.setFocusPainted(false);
+        btn.setOpaque(true);
+        btn.setBorderPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+
+        Color hover = color.brighter();
+
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(hover);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(color);
+            }
+        });
+
+        return btn;
+    }
+
+    // ================= FONT =================
+    private Font loadPixelFont(float size) {
+        try {
+            Font font = Font.createFont(Font.TRUETYPE_FONT,
+                    new java.io.File("src/fonts/Minecraft.ttf"));
+            return font.deriveFont(size);
+        } catch (Exception e) {
+            return new Font("Monospaced", Font.BOLD, (int) size);
+        }
     }
 }

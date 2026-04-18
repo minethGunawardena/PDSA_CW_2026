@@ -6,6 +6,7 @@ import database.DBHelper;
 import utils.CostMatrixGenerator;
 
 import javax.swing.*;
+import javax.swing.border.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -15,7 +16,6 @@ public class MinimumCostPanel extends JPanel {
     // UI
     private JTextField nameField;
     private JTextArea output;
-
     private JButton option1, option2, option3;
 
     // Game state
@@ -24,57 +24,111 @@ public class MinimumCostPanel extends JPanel {
     private int correctAnswer;
     private int currentRoundId;
 
+    // ================= THEME COLORS =================
+    private static final Color BG_DARK      = new Color(30, 30, 30);
+    private static final Color BG_DARKER    = new Color(20, 20, 20);
+    private static final Color BG_PANEL     = new Color(40, 40, 40);
+    private static final Color ACCENT_BLUE  = new Color(52, 152, 219);
+    private static final Color ACCENT_GREEN = new Color(46, 204, 113);
+    private static final Color ACCENT_PURP  = new Color(155, 89, 182);
+    private static final Color TEXT_WHITE   = Color.WHITE;
+    private static final Color TEXT_DIM     = new Color(180, 180, 180);
+    private static final Color BORDER_COLOR = new Color(60, 60, 60);
+
     public MinimumCostPanel() {
 
-        setLayout(new BorderLayout());
-        setBackground(new Color(245, 245, 245));
+        setLayout(new BorderLayout(10, 10));
+        setBackground(BG_DARK);
+        setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // ================= TOP =================
-        JPanel topPanel = new JPanel(new GridLayout(2, 1, 5, 5));
-        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        topPanel.setBackground(new Color(245, 245, 245));
+        // ================= TOP: TITLE + NAME =================
+        JPanel topPanel = new JPanel(new BorderLayout(10, 8));
+        topPanel.setBackground(BG_DARK);
+        topPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+
+        JLabel titleLabel = new JLabel("Minimum Cost", SwingConstants.CENTER);
+        titleLabel.setFont(loadPixelFont(22f));
+        titleLabel.setForeground(ACCENT_BLUE);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+
+        JPanel nameRow = new JPanel(new BorderLayout(8, 0));
+        nameRow.setBackground(BG_DARK);
 
         JLabel nameLabel = new JLabel("Player Name:");
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        nameLabel.setForeground(TEXT_DIM);
+        nameLabel.setFont(loadPixelFont(13f));
 
         nameField = new JTextField();
-        nameField.setFont(new Font("Arial", Font.PLAIN, 14));
+        nameField.setFont(loadPixelFont(13f));
+        nameField.setBackground(new Color(50, 50, 50));
+        nameField.setForeground(TEXT_WHITE);
+        nameField.setCaretColor(ACCENT_BLUE);
+        nameField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR, 1),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+        ));
 
-        topPanel.add(nameLabel);
-        topPanel.add(nameField);
+        nameRow.add(nameLabel, BorderLayout.WEST);
+        nameRow.add(nameField, BorderLayout.CENTER);
+
+        topPanel.add(titleLabel, BorderLayout.NORTH);
+        topPanel.add(nameRow, BorderLayout.CENTER);
 
         add(topPanel, BorderLayout.NORTH);
 
-        // ================= CENTER =================
+        // ================= CENTER: GAME LOG =================
         output = new JTextArea();
         output.setEditable(false);
-        output.setFont(new Font("Consolas", Font.PLAIN, 14));
-        output.setBackground(new Color(30, 30, 30));
-        output.setForeground(new Color(0, 255, 120));
-        output.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        output.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        output.setBackground(BG_DARKER);
+        output.setForeground(ACCENT_GREEN);
+        output.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        output.setLineWrap(true);
+        output.setWrapStyleWord(true);
 
         JScrollPane scroll = new JScrollPane(output);
-        scroll.setBorder(BorderFactory.createTitledBorder("Game Log"));
+        scroll.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR, 1),
+                "  Game Log  ",
+                TitledBorder.LEFT,
+                TitledBorder.TOP,
+                loadPixelFont(11f),
+                TEXT_DIM
+        ));
+        scroll.getViewport().setBackground(BG_DARKER);
+        scroll.getVerticalScrollBar().setBackground(BG_PANEL);
+
         add(scroll, BorderLayout.CENTER);
 
-        // ================= OPTIONS =================
+        // ================= RIGHT: OPTIONS =================
         option1 = new JButton();
         option2 = new JButton();
         option3 = new JButton();
 
-        styleButton(option1, new Color(52, 152, 219));
-        styleButton(option2, new Color(46, 204, 113));
-        styleButton(option3, new Color(155, 89, 182));
+        styleButton(option1, ACCENT_BLUE);
+        styleButton(option2, ACCENT_GREEN);
+        styleButton(option3, ACCENT_PURP);
 
-        JPanel optionsPanel = new JPanel(new GridLayout(3, 1, 10, 10));
-        optionsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        optionsPanel.setBackground(new Color(245, 245, 245));
+        JPanel optionsWrapper = new JPanel(new BorderLayout());
+        optionsWrapper.setBackground(BG_DARK);
+
+        JLabel chooseLabel = new JLabel("Min Cost?", SwingConstants.CENTER);
+        chooseLabel.setFont(loadPixelFont(12f));
+        chooseLabel.setForeground(TEXT_DIM);
+        chooseLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+
+        JPanel optionsPanel = new JPanel(new GridLayout(3, 1, 0, 12));
+        optionsPanel.setBackground(BG_DARK);
 
         optionsPanel.add(option1);
         optionsPanel.add(option2);
         optionsPanel.add(option3);
 
-        add(optionsPanel, BorderLayout.EAST);
+        optionsWrapper.add(chooseLabel, BorderLayout.NORTH);
+        optionsWrapper.add(optionsPanel, BorderLayout.CENTER);
+        optionsWrapper.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 0));
+
+        add(optionsWrapper, BorderLayout.EAST);
 
         // ================= EVENTS =================
         option1.addActionListener(e -> handleAnswer(option1));
@@ -87,39 +141,33 @@ public class MinimumCostPanel extends JPanel {
 
     // ================= ROUND =================
     private void startNewRound() {
-
         try {
             Random rand = new Random();
 
-            N = rand.nextInt(51) + 50; // 50–100
+            N = rand.nextInt(51) + 50;
             costMatrix = CostMatrixGenerator.generate(N);
 
-            output.append("\n🧮 NEW ROUND STARTED\n");
-            output.append("Tasks/Employees: " + N + "\n");
+            output.append("\n▶ NEW ROUND STARTED\n");
+            output.append("  Tasks/Employees : " + N + "\n");
 
             currentRoundId = DBHelper.insertRound("MinimumCost");
 
-            // ================= GREEDY =================
             long start1 = System.nanoTime();
             int greedyResult = GreedySolver.solve(costMatrix);
             long end1 = System.nanoTime();
-
             DBHelper.insertTime(currentRoundId, "Greedy", (end1 - start1));
 
-            // ================= HUNGARIAN =================
             long start2 = System.nanoTime();
             int optimalResult = HungarianSolver.solve(copyMatrix(costMatrix));
             long end2 = System.nanoTime();
-
             DBHelper.insertTime(currentRoundId, "Hungarian", (end2 - start2));
 
             correctAnswer = optimalResult;
-
             DBHelper.insertSolution(currentRoundId, correctAnswer);
 
-            output.append("Round ID: " + currentRoundId + "\n");
-            output.append("Choose the minimum cost 👇\n");
-            output.append("--------------------------------\n");
+            output.append("  Round ID        : " + currentRoundId + "\n");
+            output.append("  Pick the minimum assignment cost!\n");
+            output.append("────────────────────────────────────\n");
 
             generateOptions(greedyResult, optimalResult);
 
@@ -130,7 +178,6 @@ public class MinimumCostPanel extends JPanel {
 
     // ================= OPTIONS =================
     private void generateOptions(int greedy, int optimal) {
-
         Set<Integer> set = new HashSet<>();
         set.add(optimal);
         set.add(greedy);
@@ -152,12 +199,12 @@ public class MinimumCostPanel extends JPanel {
 
     // ================= ANSWER =================
     private void handleAnswer(JButton btn) {
-
         try {
             String name = nameField.getText().trim();
 
             if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Enter player name!");
+                JOptionPane.showMessageDialog(this, "Enter your player name first!",
+                        "Missing Name", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -165,15 +212,15 @@ public class MinimumCostPanel extends JPanel {
             boolean isCorrect = (selected == correctAnswer);
 
             if (isCorrect) {
-                output.append("✅ Correct!\n");
+                output.append("  ✔ CORRECT! Well done, " + name + "!\n");
             } else {
-                output.append("❌ Wrong! Correct = " + correctAnswer + "\n");
+                output.append("  ✘ WRONG!  Correct answer = " + correctAnswer + "\n");
             }
 
             int playerId = DBHelper.getOrCreatePlayer(name);
             DBHelper.savePlayerAnswer(playerId, currentRoundId, selected, isCorrect);
 
-            output.append("--------------------------------\n");
+            output.append("────────────────────────────────────\n");
 
             startNewRound();
 
@@ -182,13 +229,27 @@ public class MinimumCostPanel extends JPanel {
         }
     }
 
-    // ================= STYLE =================
+    // ================= BUTTON STYLE =================
     private void styleButton(JButton btn, Color color) {
-        btn.setFont(new Font("Arial", Font.BOLD, 14));
-        btn.setForeground(Color.WHITE);
+        btn.setFont(loadPixelFont(15f));
+        btn.setForeground(TEXT_WHITE);
         btn.setBackground(color);
         btn.setFocusPainted(false);
-        btn.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        btn.setOpaque(true);
+        btn.setBorderPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createEmptyBorder(14, 20, 14, 20));
+
+        Color hover = color.brighter();
+
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(hover);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(color);
+            }
+        });
     }
 
     // ================= UTILITY =================
@@ -198,5 +259,16 @@ public class MinimumCostPanel extends JPanel {
             System.arraycopy(original[i], 0, copy[i], 0, original.length);
         }
         return copy;
+    }
+
+    // ================= FONT =================
+    private Font loadPixelFont(float size) {
+        try {
+            Font font = Font.createFont(Font.TRUETYPE_FONT,
+                    new java.io.File("src/fonts/Minecraft.ttf"));
+            return font.deriveFont(size);
+        } catch (Exception e) {
+            return new Font("Monospaced", Font.BOLD, (int) size);
+        }
     }
 }

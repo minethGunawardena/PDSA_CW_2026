@@ -96,4 +96,21 @@ public class DBHelper {
             e.printStackTrace();
         }
     }
+
+    public static ResultSet getAllTimes() {
+        try {
+            Connection conn = DBConnection.connect();
+
+            String sql = "SELECT g.game_type AS game_name, a.algorithm_name AS algorithm, a.time_taken AS time_ns " +
+                    "FROM algorithm_times a " +
+                    "JOIN game_rounds g ON a.round_id = g.id";
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            return ps.executeQuery();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
