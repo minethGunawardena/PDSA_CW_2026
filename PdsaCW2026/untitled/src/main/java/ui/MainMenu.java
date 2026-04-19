@@ -15,7 +15,7 @@ public class MainMenu extends JFrame {
 
     public MainMenu() {
 
-        setTitle("Algorithm Game System");
+        setTitle("Algorithm Game System  -V 1.001");
         setSize(600, 500);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
