@@ -132,7 +132,7 @@ public class MainMenu extends JFrame {
                         "- Performance Analysis Charts\n" +
                         "- Real-time Algorithm Execution Tracking\n\n" +
                         "--------------------------------------\n" +
-                        "Batch: COBSCCOMP25.2P -062\n\n" +
+                        "Batch: COBSCCOMP25.2P\n\n" +
                         "Group Members:\n" +
                         "COBSCCOMP25.2P -026 - W.O.R. Vitharana\n" +
                         "COBSCCOMP25.2P -029 - K. Lahiru Fernando\n" +
