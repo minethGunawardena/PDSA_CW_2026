@@ -113,7 +113,6 @@ public class KnightTourTest {
         System.out.println("STATUS: " + (valid ? "PASS" : "FAIL") + "\n");
     }
 
-
     private static void evaluateBoard(boolean result, int[][] board, int N) {
 
         if (!result) {

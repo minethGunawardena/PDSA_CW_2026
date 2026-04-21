@@ -18,6 +18,8 @@
 --
 -- Table structure for table `algorithm_times`
 --
+CREATE DATABASE game_system;
+USE game_system;
 
 DROP TABLE IF EXISTS `algorithm_times`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

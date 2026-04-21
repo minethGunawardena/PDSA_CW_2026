@@ -1,8 +1,8 @@
 package test;
 
-import algorithms.graph.SnakeLadderSolver;
-
 import java.util.Arrays;
+
+import algorithms.graph.SnakeLadderSolver;
 
 public class SnakeLadderTest {
 
@@ -21,7 +21,6 @@ public class SnakeLadderTest {
         System.out.println("\n=== TESTING COMPLETED ===");
     }
 
-
     private static void testCleanBoardSmall() {
 
         int N = 3;
@@ -29,7 +28,6 @@ public class SnakeLadderTest {
 
         runTest("Clean Board - Small (3x3)", board, N);
     }
-
 
     private static void testCleanBoardMedium() {
 
@@ -50,7 +48,6 @@ public class SnakeLadderTest {
         runTest("Board with Snake (10 -> 3)", board, N);
     }
 
-
     private static void testWithLadder() {
 
         int N = 4;
@@ -61,7 +58,6 @@ public class SnakeLadderTest {
 
         runTest("Board with Ladder (2 -> 14)", board, N);
     }
-
 
     private static void testMixedBoard() {
 
@@ -95,7 +91,6 @@ public class SnakeLadderTest {
         runTest("Large Board (10x10)", board, N);
     }
 
-
     private static void runTest(String testName, int[] board, int N) {
 
         int[] copy = Arrays.copyOf(board, board.length);
@@ -114,7 +109,6 @@ public class SnakeLadderTest {
             System.out.println("STATUS: FAIL (No solution found)\n");
         }
     }
-
 
     private static int[] cleanBoard(int N) {
 
