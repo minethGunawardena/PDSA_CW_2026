@@ -47,7 +47,6 @@ public class KnightTourPanel extends JPanel {
         setBackground(BG_DARK);
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // ================= TOP: TITLE + CONTROLS =================
         JPanel topPanel = new JPanel(new BorderLayout(10, 8));
         topPanel.setBackground(BG_DARK);
         topPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
@@ -104,7 +103,6 @@ public class KnightTourPanel extends JPanel {
 
         add(topPanel, BorderLayout.NORTH);
 
-        // ================= CENTER: BOARD =================
         boardPanel = new JPanel();
         boardPanel.setBackground(BG_DARKER);
         boardPanel.setOpaque(true);
@@ -112,7 +110,6 @@ public class KnightTourPanel extends JPanel {
 
         add(boardPanel, BorderLayout.CENTER);
 
-        // ================= SOUTH: OUTPUT LOG =================
         output = new JTextArea(5, 30);
         output.setEditable(false);
         output.setFont(new Font("Monospaced", Font.PLAIN, 13));
@@ -136,7 +133,6 @@ public class KnightTourPanel extends JPanel {
 
         add(scroll, BorderLayout.SOUTH);
 
-        // ================= WEST: BUTTONS =================
         JButton runBtn  = styledButton("▶  Run Tour",  ACCENT_BLUE);
         JButton animBtn = styledButton("⟳  Animate",   ACCENT_GOLD);
 
@@ -155,7 +151,6 @@ public class KnightTourPanel extends JPanel {
         startRound();
     }
 
-    // ================= INIT =================
     private void startRound() {
         N = (int) sizeBox.getSelectedItem();
         board = new int[N][N];
@@ -170,7 +165,6 @@ public class KnightTourPanel extends JPanel {
         drawBoard(-1);
     }
 
-    // ================= RUN =================
     private void runGame() {
         try {
             String name = nameField.getText().trim();
@@ -216,7 +210,6 @@ public class KnightTourPanel extends JPanel {
         }
     }
 
-    // ================= ANIMATION =================
     private void startAnimation() {
         if (animating) return;
 
@@ -254,7 +247,6 @@ public class KnightTourPanel extends JPanel {
         timer.start();
     }
 
-    // ================= DRAW BOARD =================
     private void drawBoard(int highlight) {
         boardPanel.removeAll();
         boardPanel.setLayout(new GridLayout(N, N));
@@ -299,7 +291,6 @@ public class KnightTourPanel extends JPanel {
         boardPanel.repaint();
     }
 
-    // ================= BUTTON STYLE =================
     private JButton styledButton(String text, Color color) {
         JButton btn = new JButton(text);
         btn.setFont(loadPixelFont(13f));
@@ -325,7 +316,6 @@ public class KnightTourPanel extends JPanel {
         return btn;
     }
 
-    // ================= FONT =================
     private Font loadPixelFont(float size) {
         try {
             Font font = Font.createFont(Font.TRUETYPE_FONT,

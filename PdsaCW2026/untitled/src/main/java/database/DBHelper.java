@@ -97,6 +97,41 @@ public class DBHelper {
         }
     }
 
+    /**
+     * Saves a unique solution board string into the unique_solutions table.
+     * is_found = TRUE means a player has found this solution this round.
+     * Used by QueensPanel to track which board layouts have been recognised.
+     */
+    public static void insertUniqueSolution(String gameType, String solutionText) {
+        try (Connection conn = DBConnection.connect()) {
+
+            String sql = "INSERT INTO unique_solutions (game_type, solution_text, is_found) VALUES (?, ?, TRUE)";
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setString(1, gameType);
+            ps.setString(2, solutionText);
+
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void clearUniqueSolutions(String gameType) {
+        try (Connection conn = DBConnection.connect()) {
+
+            String sql = "DELETE FROM unique_solutions WHERE game_type = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setString(1, gameType);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static ResultSet getAllTimes() {
         try {
             Connection conn = DBConnection.connect();

@@ -37,7 +37,7 @@ public class SnakeLadderPanel extends JPanel {
         setBackground(BG_DARK);
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // ================= TOP: TITLE + NAME =================
+
         JPanel topPanel = new JPanel(new BorderLayout(10, 8));
         topPanel.setBackground(BG_DARK);
         topPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
@@ -72,7 +72,7 @@ public class SnakeLadderPanel extends JPanel {
 
         add(topPanel, BorderLayout.NORTH);
 
-        // ================= CENTER: GAME LOG =================
+
         output = new JTextArea();
         output.setEditable(false);
         output.setFont(new Font("Monospaced", Font.PLAIN, 13));
@@ -96,7 +96,7 @@ public class SnakeLadderPanel extends JPanel {
 
         add(scroll, BorderLayout.CENTER);
 
-        // ================= RIGHT: OPTIONS =================
+
         option1 = new JButton();
         option2 = new JButton();
         option3 = new JButton();
@@ -126,7 +126,7 @@ public class SnakeLadderPanel extends JPanel {
 
         add(optionsWrapper, BorderLayout.EAST);
 
-        // ================= LISTENERS =================
+
         option1.addActionListener(e -> handleAnswer(option1));
         option2.addActionListener(e -> handleAnswer(option2));
         option3.addActionListener(e -> handleAnswer(option3));
@@ -134,7 +134,7 @@ public class SnakeLadderPanel extends JPanel {
         startNewRound();
     }
 
-    // ================= ROUND =================
+
     private void startNewRound() {
         try {
             Random rand = new Random();
@@ -171,7 +171,7 @@ public class SnakeLadderPanel extends JPanel {
         }
     }
 
-    // ================= OPTIONS =================
+
     private void generateOptions() {
         Random rand = new Random();
         Set<Integer> set = new HashSet<>();
@@ -190,7 +190,7 @@ public class SnakeLadderPanel extends JPanel {
         option3.setText(options.get(2) + " moves");
     }
 
-    // ================= ANSWER =================
+
     private void handleAnswer(JButton btn) {
         String name = nameField.getText().trim();
 
@@ -200,7 +200,7 @@ public class SnakeLadderPanel extends JPanel {
             return;
         }
 
-        // Parse only the number before " moves"
+
         int selected = Integer.parseInt(btn.getText().replace(" moves", "").trim());
         boolean isCorrect = selected == correctAnswer;
 
@@ -216,7 +216,7 @@ public class SnakeLadderPanel extends JPanel {
         startNewRound();
     }
 
-    // ================= BOARD =================
+
     private int[] generateBoard(int N) {
         int size = N * N;
         int[] board = new int[size + 1];
@@ -242,7 +242,7 @@ public class SnakeLadderPanel extends JPanel {
         return board;
     }
 
-    // ================= BUTTON STYLE =================
+
     private void styleButton(JButton btn, Color color) {
         btn.setFont(loadPixelFont(15f));
         btn.setForeground(TEXT_WHITE);
@@ -265,7 +265,7 @@ public class SnakeLadderPanel extends JPanel {
         });
     }
 
-    // ================= FONT =================
+
     private Font loadPixelFont(float size) {
         try {
             Font font = Font.createFont(Font.TRUETYPE_FONT,

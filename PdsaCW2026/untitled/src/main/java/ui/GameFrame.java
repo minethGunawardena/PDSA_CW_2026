@@ -40,8 +40,8 @@ public class GameFrame extends JFrame {
                 return new KnightTourPanel();
 
             case "16 Queens":
-                // return new QueensPanel();
-                return placeholder("16 Queens coming soon...");
+                return new QueensPanel();
+
 
             case "Performance Charts":
                 return new ui.panels.PerformanceChartPanel();

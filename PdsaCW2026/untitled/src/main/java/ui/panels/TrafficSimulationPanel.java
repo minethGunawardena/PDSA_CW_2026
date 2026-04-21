@@ -21,7 +21,6 @@ public class TrafficSimulationPanel extends JPanel {
 
     private HashMap<String, HashMap<String, Integer>> graph;
 
-    // ================= THEME COLORS =================
     private static final Color BG_DARK      = new Color(30, 30, 30);
     private static final Color BG_DARKER    = new Color(20, 20, 20);
     private static final Color BG_PANEL     = new Color(40, 40, 40);
@@ -90,7 +89,7 @@ public class TrafficSimulationPanel extends JPanel {
 
         add(topPanel, BorderLayout.NORTH);
 
-        // ================= CENTER: OUTPUT LOG =================
+
         output = new JTextArea();
         output.setEditable(false);
         output.setFont(new Font("Monospaced", Font.PLAIN, 13));
@@ -114,7 +113,7 @@ public class TrafficSimulationPanel extends JPanel {
 
         add(scroll, BorderLayout.CENTER);
 
-        // ================= SOUTH: BUTTONS =================
+
         JButton submitBtn   = styledButton("✔  Submit Answer", ACCENT_GREEN);
         JButton newRoundBtn = styledButton("▶  New Round",     ACCENT_PURP);
 
@@ -127,14 +126,14 @@ public class TrafficSimulationPanel extends JPanel {
 
         add(bottom, BorderLayout.SOUTH);
 
-        // ================= EVENTS =================
+
         submitBtn.addActionListener(e -> checkAnswer());
         newRoundBtn.addActionListener(e -> startNewRound());
 
         startNewRound();
     }
 
-    // ================= START ROUND =================
+
     private void startNewRound() {
         try {
             output.setText("");
@@ -170,7 +169,7 @@ public class TrafficSimulationPanel extends JPanel {
         }
     }
 
-    // ================= DISPLAY GRAPH =================
+
     private void displayGraph(HashMap<String, HashMap<String, Integer>> graph) {
         output.append("  NETWORK GRAPH (Capacity Map)\n\n");
 
@@ -191,7 +190,7 @@ public class TrafficSimulationPanel extends JPanel {
         output.append("\n────────────────────────────────────\n");
     }
 
-    // ================= CHECK ANSWER =================
+
     private void checkAnswer() {
         try {
             String name = nameField.getText().trim();
@@ -222,7 +221,7 @@ public class TrafficSimulationPanel extends JPanel {
         }
     }
 
-    // ================= CLONE GRAPH =================
+
     private HashMap<String, HashMap<String, Integer>> cloneGraph(
             HashMap<String, HashMap<String, Integer>> original) {
 
@@ -233,7 +232,7 @@ public class TrafficSimulationPanel extends JPanel {
         return copy;
     }
 
-    // ================= BUTTON STYLE =================
+
     private JButton styledButton(String text, Color color) {
         JButton btn = new JButton(text);
         btn.setFont(loadPixelFont(14f));
@@ -259,7 +258,7 @@ public class TrafficSimulationPanel extends JPanel {
         return btn;
     }
 
-    // ================= FONT =================
+
     private Font loadPixelFont(float size) {
         try {
             Font font = Font.createFont(Font.TRUETYPE_FONT,

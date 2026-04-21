@@ -4,19 +4,23 @@ import database.DBConnection;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.axis.SymbolAxis;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.renderer.category.BarRenderer;
-import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.*;
+import java.util.List;
 
 public class PerformanceChartPanel extends JPanel {
 
@@ -32,22 +36,23 @@ public class PerformanceChartPanel extends JPanel {
     private static final Color ACCENT_GREEN = new Color(46, 204, 113);
     private static final Color ACCENT_RED   = new Color(231, 76, 60);
     private static final Color ACCENT_GOLD  = new Color(241, 196, 15);
+    private static final Color ACCENT_CYAN  = new Color(26, 188, 156);
     private static final Color TEXT_WHITE   = Color.WHITE;
     private static final Color TEXT_DIM     = new Color(180, 180, 180);
     private static final Color BORDER_COLOR = new Color(60, 60, 60);
 
-    // Chart bar colors per algorithm slot
-    private static final Color[] BAR_COLORS = {
-            ACCENT_BLUE, ACCENT_GREEN, ACCENT_RED, ACCENT_GOLD, ACCENT_PURP
+    private static final Color[] LINE_COLORS = {
+            ACCENT_RED, ACCENT_GREEN, ACCENT_GOLD, ACCENT_BLUE, ACCENT_PURP, ACCENT_CYAN
     };
 
-    public PerformanceChartPanel() {
 
+    private static final Set<String> MS_GAMES = new HashSet<>(Arrays.asList("SixteenQueens"));
+
+    public PerformanceChartPanel() {
         setLayout(new BorderLayout(10, 10));
         setBackground(BG_DARK);
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // ================= TOP: TITLE + CONTROLS =================
         JPanel topPanel = new JPanel(new BorderLayout(10, 8));
         topPanel.setBackground(BG_DARK);
         topPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
@@ -69,7 +74,7 @@ public class PerformanceChartPanel extends JPanel {
         gameSelector.setBackground(new Color(50, 50, 50));
         gameSelector.setForeground(TEXT_WHITE);
         gameSelector.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
-        gameSelector.setPreferredSize(new Dimension(180, 36));
+        gameSelector.setPreferredSize(new Dimension(200, 36));
         gameSelector.setRenderer(new DefaultListCellRenderer() {
             public Component getListCellRendererComponent(JList<?> list, Object value,
                                                           int index, boolean isSelected, boolean cellHasFocus) {
@@ -93,22 +98,17 @@ public class PerformanceChartPanel extends JPanel {
 
         topPanel.add(titleLabel, BorderLayout.NORTH);
         topPanel.add(controlsRow, BorderLayout.CENTER);
-
         add(topPanel, BorderLayout.NORTH);
 
-        // ================= CENTER: CHART AREA =================
         chartContainer = new JPanel(new BorderLayout());
         chartContainer.setBackground(BG_DARKER);
         chartContainer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(BORDER_COLOR, 1),
                 "  Algorithm Comparison  ",
-                TitledBorder.LEFT,
-                TitledBorder.TOP,
-                loadPixelFont(11f),
-                TEXT_DIM
+                TitledBorder.LEFT, TitledBorder.TOP,
+                loadPixelFont(11f), TEXT_DIM
         ));
 
-        // Placeholder before a game is selected
         JLabel placeholder = new JLabel("Select a game and press Show Chart", SwingConstants.CENTER);
         placeholder.setFont(loadPixelFont(14f));
         placeholder.setForeground(new Color(80, 80, 80));
@@ -117,185 +117,225 @@ public class PerformanceChartPanel extends JPanel {
         add(chartContainer, BorderLayout.CENTER);
     }
 
-    // ================= LOAD GAMES =================
     private void loadGames() {
         try {
             Connection conn = DBConnection.connect();
-            String sql = "SELECT DISTINCT game_type FROM game_rounds";
+            String sql = "SELECT DISTINCT game_type FROM game_rounds ORDER BY game_type";
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
-
             while (rs.next()) {
                 gameSelector.addItem(rs.getString("game_type"));
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // ================= LOAD CHART =================
     private void loadChart() {
-
         String selectedGame = (String) gameSelector.getSelectedItem();
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        if (selectedGame == null) return;
 
-        long total = 0;
-        int count = 0;
-        long min = Long.MAX_VALUE;
-        long max = Long.MIN_VALUE;
+        boolean isMs = MS_GAMES.contains(selectedGame);
+        String timeUnit = isMs ? "ms" : "ns";
+
+        Map<String, List<Long>> algoData = new LinkedHashMap<>();
+        long totalSum   = 0;
+        int  totalCount = 0;
+        long globalMin  = Long.MAX_VALUE;
+        long globalMax  = Long.MIN_VALUE;
 
         try {
             Connection conn = DBConnection.connect();
+            String pkCol = detectPkColumn(conn);
 
             String sql =
                     "SELECT a.algorithm_name, a.time_taken " +
                             "FROM algorithm_times a " +
-                            "JOIN game_rounds g ON a.round_id = g.round_id " +
-                            "WHERE g.game_type = ?";
+                            "JOIN game_rounds g ON a.round_id = g." + pkCol + " " +
+                            "WHERE g.game_type = ? " +
+                            "ORDER BY a.algorithm_name, g." + pkCol;
 
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, selectedGame);
             ResultSet rs = ps.executeQuery();
 
+            boolean hasRows = false;
             while (rs.next()) {
+                hasRows = true;
                 String algo = rs.getString("algorithm_name");
-                long time = rs.getLong("time_taken");
-
-                dataset.addValue(time, algo, selectedGame);
-
-                total += time;
-                count++;
-                min = Math.min(min, time);
-                max = Math.max(max, time);
+                long   time = rs.getLong("time_taken");
+                algoData.computeIfAbsent(algo, k -> new ArrayList<>()).add(time);
+                totalSum += time;
+                totalCount++;
+                globalMin = Math.min(globalMin, time);
+                globalMax = Math.max(globalMax, time);
             }
+
+            if (!hasRows) { showNoData(selectedGame); return; }
 
         } catch (Exception e) {
             e.printStackTrace();
+            showError("DB error: " + e.getMessage());
+            return;
         }
 
-        // ================= BUILD CHART =================
-        JFreeChart chart = ChartFactory.createBarChart(
-                "",
-                "Game",
-                "Time (ns)",
-                dataset,
-                PlotOrientation.VERTICAL,
-                true,
-                true,
-                false
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        for (Map.Entry<String, List<Long>> entry : algoData.entrySet()) {
+            XYSeries series = new XYSeries(entry.getKey());
+            List<Long> times = entry.getValue();
+            for (int i = 0; i < times.size(); i++) series.add(i + 1, times.get(i));
+            dataset.addSeries(series);
+        }
+
+        int maxAttempts = algoData.values().stream().mapToInt(List::size).max().orElse(1);
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                selectedGame + " — Algorithm Performance",
+                "Attempt", "Time (" + timeUnit + ")",
+                dataset, PlotOrientation.VERTICAL, true, true, false
         );
 
-        // ---- Dark theme the chart ----
         chart.setBackgroundPaint(BG_DARKER);
         chart.getLegend().setBackgroundPaint(BG_PANEL);
         chart.getLegend().setItemPaint(TEXT_WHITE);
+        chart.getLegend().setItemFont(loadPixelFont(11f));
+        chart.getTitle().setPaint(TEXT_DIM);
+        chart.getTitle().setFont(loadPixelFont(13f));
 
-        CategoryPlot plot = chart.getCategoryPlot();
+        XYPlot plot = chart.getXYPlot();
         plot.setBackgroundPaint(BG_DARKER);
         plot.setDomainGridlinePaint(BORDER_COLOR);
         plot.setRangeGridlinePaint(BORDER_COLOR);
         plot.setOutlinePaint(BORDER_COLOR);
 
-        CategoryAxis domainAxis = plot.getDomainAxis();
+        String[] attemptLabels = new String[maxAttempts + 1];
+        attemptLabels[0] = "";
+        for (int i = 1; i <= maxAttempts; i++) attemptLabels[i] = ordinal(i);
+
+        SymbolAxis domainAxis = new SymbolAxis("Attempt", attemptLabels);
         domainAxis.setTickLabelPaint(TEXT_DIM);
         domainAxis.setLabelPaint(TEXT_DIM);
         domainAxis.setAxisLinePaint(BORDER_COLOR);
-        domainAxis.setTickLabelFont(loadPixelFont(11f));
+        domainAxis.setTickLabelFont(loadPixelFont(10f));
         domainAxis.setLabelFont(loadPixelFont(12f));
+        domainAxis.setGridBandsVisible(false);
+        domainAxis.setRange(0.5, maxAttempts + 0.5);
+        plot.setDomainAxis(domainAxis);
 
         NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
         rangeAxis.setTickLabelPaint(TEXT_DIM);
         rangeAxis.setLabelPaint(TEXT_DIM);
         rangeAxis.setAxisLinePaint(BORDER_COLOR);
-        rangeAxis.setTickLabelFont(loadPixelFont(11f));
+        rangeAxis.setTickLabelFont(loadPixelFont(10f));
         rangeAxis.setLabelFont(loadPixelFont(12f));
 
-        BarRenderer renderer = (BarRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, ACCENT_BLUE);
-        renderer.setSeriesPaint(1, ACCENT_GREEN);
-        renderer.setSeriesPaint(2, ACCENT_RED);
-        renderer.setSeriesPaint(3, ACCENT_GOLD);
-        renderer.setSeriesPaint(4, ACCENT_PURP);
-        renderer.setBarPainter(new org.jfree.chart.renderer.category.StandardBarPainter());
-        renderer.setShadowVisible(false);
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, true);
+        int idx = 0;
+        for (String algoName : algoData.keySet()) {
+            Color c = getAlgoColor(algoName, idx);
+            renderer.setSeriesPaint(idx, c);
+            renderer.setSeriesStroke(idx, new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            renderer.setSeriesShape(idx, new Ellipse2D.Double(-5, -5, 10, 10));
+            renderer.setSeriesShapesFilled(idx, true);
+            idx++;
+        }
+        plot.setRenderer(renderer);
 
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setBackground(BG_DARKER);
+        chartPanel.setMouseWheelEnabled(true);
 
-        // ================= STATS BAR =================
-        double avg = (count == 0) ? 0 : (double) total / count;
-
-        JPanel statsRow = new JPanel(new GridLayout(1, 3, 10, 0));
+        double avg = (totalCount == 0) ? 0 : (double) totalSum / totalCount;
+        JPanel statsRow = new JPanel(new GridLayout(1, 4, 10, 0));
         statsRow.setBackground(BG_PANEL);
         statsRow.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        statsRow.add(makeStatLabel("GAME", selectedGame, ACCENT_PURP));
+        statsRow.add(makeStatLabel("AVG",  String.format("%.0f %s", avg, timeUnit), ACCENT_BLUE));
+        statsRow.add(makeStatLabel("MIN",  globalMin == Long.MAX_VALUE ? "—" : globalMin + " " + timeUnit, ACCENT_GREEN));
+        statsRow.add(makeStatLabel("MAX",  globalMax == Long.MIN_VALUE ? "—" : globalMax + " " + timeUnit, ACCENT_RED));
 
-        statsRow.add(makeStatLabel("AVG", String.format("%.0f ns", avg), ACCENT_BLUE));
-        statsRow.add(makeStatLabel("MIN", min == Long.MAX_VALUE ? "—" : min + " ns", ACCENT_GREEN));
-        statsRow.add(makeStatLabel("MAX", max == Long.MIN_VALUE ? "—" : max + " ns", ACCENT_RED));
-
-        // ================= ASSEMBLE =================
         chartContainer.removeAll();
         chartContainer.add(chartPanel, BorderLayout.CENTER);
-        chartContainer.add(statsRow, BorderLayout.SOUTH);
+        chartContainer.add(statsRow,   BorderLayout.SOUTH);
         chartContainer.revalidate();
         chartContainer.repaint();
     }
 
-    // ================= STAT LABEL =================
+    private String detectPkColumn(Connection conn) {
+        try {
+            conn.prepareStatement("SELECT round_id FROM game_rounds LIMIT 1").executeQuery();
+            return "round_id";
+        } catch (Exception e) {
+            return "id";
+        }
+    }
+
+    private void showNoData(String game) {
+        JLabel lbl = new JLabel("No data found for: " + game, SwingConstants.CENTER);
+        lbl.setFont(loadPixelFont(13f)); lbl.setForeground(ACCENT_RED);
+        chartContainer.removeAll(); chartContainer.add(lbl, BorderLayout.CENTER);
+        chartContainer.revalidate(); chartContainer.repaint();
+    }
+
+    private void showError(String msg) {
+        JLabel lbl = new JLabel(msg, SwingConstants.CENTER);
+        lbl.setFont(loadPixelFont(12f)); lbl.setForeground(ACCENT_RED);
+        chartContainer.removeAll(); chartContainer.add(lbl, BorderLayout.CENTER);
+        chartContainer.revalidate(); chartContainer.repaint();
+    }
+
+    private String ordinal(int n) {
+        if (n >= 11 && n <= 13) return n + "th";
+        switch (n % 10) {
+            case 1: return n + "st"; case 2: return n + "nd"; case 3: return n + "rd";
+            default: return n + "th";
+        }
+    }
+
+    private Color getAlgoColor(String name, int fallbackIndex) {
+        switch (name) {
+            case "BFS":        return ACCENT_BLUE;
+            case "Dijkstra":   return ACCENT_GREEN;
+            case "Hungarian":  return ACCENT_GOLD;
+            case "Sequential": return ACCENT_PURP;
+            case "Threaded":   return ACCENT_RED;
+            case "Greedy":     return ACCENT_CYAN;
+            default:           return LINE_COLORS[fallbackIndex % LINE_COLORS.length];
+        }
+    }
+
     private JPanel makeStatLabel(String title, String value, Color accent) {
         JPanel cell = new JPanel(new BorderLayout(0, 4));
         cell.setBackground(BG_PANEL);
         cell.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER_COLOR, 1),
-                BorderFactory.createEmptyBorder(8, 12, 8, 12)
-        ));
-
+                BorderFactory.createEmptyBorder(8, 12, 8, 12)));
         JLabel titleLbl = new JLabel(title, SwingConstants.CENTER);
-        titleLbl.setFont(loadPixelFont(11f));
-        titleLbl.setForeground(accent);
-
+        titleLbl.setFont(loadPixelFont(11f)); titleLbl.setForeground(accent);
         JLabel valueLbl = new JLabel(value, SwingConstants.CENTER);
-        valueLbl.setFont(loadPixelFont(13f));
-        valueLbl.setForeground(TEXT_WHITE);
-
-        cell.add(titleLbl, BorderLayout.NORTH);
-        cell.add(valueLbl, BorderLayout.CENTER);
-
+        valueLbl.setFont(loadPixelFont(12f)); valueLbl.setForeground(TEXT_WHITE);
+        cell.add(titleLbl, BorderLayout.NORTH); cell.add(valueLbl, BorderLayout.CENTER);
         return cell;
     }
 
-    // ================= BUTTON STYLE =================
     private JButton styledButton(String text, Color color) {
         JButton btn = new JButton(text);
-        btn.setFont(loadPixelFont(13f));
-        btn.setForeground(TEXT_WHITE);
-        btn.setBackground(color);
-        btn.setFocusPainted(false);
-        btn.setOpaque(true);
-        btn.setBorderPainted(false);
+        btn.setFont(loadPixelFont(13f)); btn.setForeground(TEXT_WHITE);
+        btn.setBackground(color); btn.setFocusPainted(false);
+        btn.setOpaque(true); btn.setBorderPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setBorder(BorderFactory.createEmptyBorder(10, 18, 10, 18));
-
         Color hover = color.brighter();
-
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(hover);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(color);
-            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(hover); }
+            public void mouseExited(java.awt.event.MouseEvent evt)  { btn.setBackground(color); }
         });
-
         return btn;
     }
 
-    // ================= FONT =================
     private Font loadPixelFont(float size) {
         try {
-            Font font = Font.createFont(Font.TRUETYPE_FONT,
-                    new java.io.File("src/fonts/Minecraft.ttf"));
+            Font font = Font.createFont(Font.TRUETYPE_FONT, new java.io.File("src/fonts/Minecraft.ttf"));
             return font.deriveFont(size);
         } catch (Exception e) {
             return new Font("Monospaced", Font.BOLD, (int) size);

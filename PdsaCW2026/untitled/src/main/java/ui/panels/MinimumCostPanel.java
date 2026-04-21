@@ -76,7 +76,6 @@ public class MinimumCostPanel extends JPanel {
 
         add(topPanel, BorderLayout.NORTH);
 
-        // ================= CENTER: GAME LOG =================
         output = new JTextArea();
         output.setEditable(false);
         output.setFont(new Font("Monospaced", Font.PLAIN, 13));
@@ -100,7 +99,6 @@ public class MinimumCostPanel extends JPanel {
 
         add(scroll, BorderLayout.CENTER);
 
-        // ================= RIGHT: OPTIONS =================
         option1 = new JButton();
         option2 = new JButton();
         option3 = new JButton();
@@ -135,11 +133,9 @@ public class MinimumCostPanel extends JPanel {
         option2.addActionListener(e -> handleAnswer(option2));
         option3.addActionListener(e -> handleAnswer(option3));
 
-        // ================= START =================
         startNewRound();
     }
 
-    // ================= ROUND =================
     private void startNewRound() {
         try {
             Random rand = new Random();
@@ -176,7 +172,6 @@ public class MinimumCostPanel extends JPanel {
         }
     }
 
-    // ================= OPTIONS =================
     private void generateOptions(int greedy, int optimal) {
         Set<Integer> set = new HashSet<>();
         set.add(optimal);
@@ -197,7 +192,6 @@ public class MinimumCostPanel extends JPanel {
         option3.setText(String.valueOf(options.get(2)));
     }
 
-    // ================= ANSWER =================
     private void handleAnswer(JButton btn) {
         try {
             String name = nameField.getText().trim();
@@ -229,7 +223,7 @@ public class MinimumCostPanel extends JPanel {
         }
     }
 
-    // ================= BUTTON STYLE =================
+
     private void styleButton(JButton btn, Color color) {
         btn.setFont(loadPixelFont(15f));
         btn.setForeground(TEXT_WHITE);
@@ -252,7 +246,7 @@ public class MinimumCostPanel extends JPanel {
         });
     }
 
-    // ================= UTILITY =================
+
     private int[][] copyMatrix(int[][] original) {
         int[][] copy = new int[original.length][original.length];
         for (int i = 0; i < original.length; i++) {
@@ -261,7 +255,7 @@ public class MinimumCostPanel extends JPanel {
         return copy;
     }
 
-    // ================= FONT =================
+
     private Font loadPixelFont(float size) {
         try {
             Font font = Font.createFont(Font.TRUETYPE_FONT,
