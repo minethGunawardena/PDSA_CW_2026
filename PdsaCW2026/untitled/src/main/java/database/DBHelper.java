@@ -1,6 +1,9 @@
 package database;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 public class DBHelper {
 
@@ -14,7 +17,9 @@ public class DBHelper {
             ps.executeUpdate();
 
             ResultSet rs = ps.getGeneratedKeys();
-            if (rs.next()) return rs.getInt(1);
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -63,7 +68,9 @@ public class DBHelper {
             ps.setString(1, name);
             ResultSet rs = ps.executeQuery();
 
-            if (rs.next()) return rs.getInt("player_id");
+            if (rs.next()) {
+                return rs.getInt("player_id");
+            }
 
             String insert = "INSERT INTO players (name) VALUES (?)";
             PreparedStatement ps2 = conn.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS);
@@ -71,7 +78,9 @@ public class DBHelper {
             ps2.executeUpdate();
 
             ResultSet rs2 = ps2.getGeneratedKeys();
-            if (rs2.next()) return rs2.getInt(1);
+            if (rs2.next()) {
+                return rs2.getInt(1);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -99,8 +108,8 @@ public class DBHelper {
 
     /**
      * Saves a unique solution board string into the unique_solutions table.
-     * is_found = TRUE means a player has found this solution this round.
-     * Used by QueensPanel to track which board layouts have been recognised.
+     * is_found = TRUE means a player has found this solution this round. Used
+     * by QueensPanel to track which board layouts have been recognised.
      */
     public static void insertUniqueSolution(String gameType, String solutionText) {
         try (Connection conn = DBConnection.connect()) {
@@ -136,9 +145,9 @@ public class DBHelper {
         try {
             Connection conn = DBConnection.connect();
 
-            String sql = "SELECT g.game_type AS game_name, a.algorithm_name AS algorithm, a.time_taken AS time_ns " +
-                    "FROM algorithm_times a " +
-                    "JOIN game_rounds g ON a.round_id = g.id";
+            String sql = "SELECT g.game_type AS game_name, a.algorithm_name AS algorithm, a.time_taken AS time_ns "
+                    + "FROM algorithm_times a "
+                    + "JOIN game_rounds g ON a.round_id = g.id";
 
             PreparedStatement ps = conn.prepareStatement(sql);
             return ps.executeQuery();
