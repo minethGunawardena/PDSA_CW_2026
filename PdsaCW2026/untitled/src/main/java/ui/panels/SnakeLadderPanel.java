@@ -135,31 +135,48 @@ public class SnakeLadderPanel extends JPanel {
     }
 
 
+    /** Number of answer choices shown to the player each round. */
+    private static final int OPTION_COUNT = 3;
+
+    /** Range used to generate fake answer options around the correct answer. */
+    private static final int OPTION_RANGE = 5;
+
+    /** Offset applied to centre the fake options around the correct answer. */
+    private static final int OPTION_OFFSET = 2;
+
     private void startNewRound() {
         try {
             Random rand = new Random();
 
+            // Generate a random board size between 6 and 12
             N = rand.nextInt(7) + 6;
+
+            // Build the board with random snakes and ladders
             board = generateBoard(N);
 
             output.append("\n▶ NEW ROUND STARTED\n");
             output.append("  Board Size : " + N + " x " + N + "\n");
 
+            // Register this round in the database
             currentRoundId = DBHelper.insertRound("Snake");
 
+            // Time the BFS algorithm and save to database
             long start1 = System.nanoTime();
             int bfsResult = BFSSolver.solve(board, N);
             long end1 = System.nanoTime();
             DBHelper.insertTime(currentRoundId, "BFS", (end1 - start1));
 
+            // Time the Dijkstra algorithm and save to database
             long start2 = System.nanoTime();
             int dijkstraResult = DijkstraSolver.solve(board, N);
             long end2 = System.nanoTime();
             DBHelper.insertTime(currentRoundId, "Dijkstra", (end2 - start2));
 
+            // BFS result is the correct answer (minimum dice throws)
             correctAnswer = bfsResult;
             DBHelper.insertSolution(currentRoundId, correctAnswer);
 
+            // Generate the three answer options shown to the player
             generateOptions();
 
             output.append("  Round ID   : " + currentRoundId + "\n");
@@ -175,13 +192,17 @@ public class SnakeLadderPanel extends JPanel {
     private void generateOptions() {
         Random rand = new Random();
         Set<Integer> set = new HashSet<>();
+
+        // Always include the correct answer
         set.add(correctAnswer);
 
-        while (set.size() < 3) {
-            int fake = correctAnswer + rand.nextInt(5) - 2;
+        // Fill remaining slots with nearby fake values
+        while (set.size() < OPTION_COUNT) {
+            int fake = correctAnswer + rand.nextInt(OPTION_RANGE) - OPTION_OFFSET;
             if (fake > 0) set.add(fake);
         }
 
+        // Shuffle so the correct answer is in a random position
         java.util.List<Integer> options = new ArrayList<>(set);
         Collections.shuffle(options);
 
@@ -217,22 +238,34 @@ public class SnakeLadderPanel extends JPanel {
     }
 
 
+    /**
+     * Generates a random Snake and Ladder board of size N x N.
+     * board[i] = -1 means no snake or ladder at cell i.
+     * board[i] = destination means a ladder (destination > i) or snake (destination < i).
+     *
+     * @param N  Board dimension.
+     * @return   1D board array of size N*N + 1.
+     */
     private int[] generateBoard(int N) {
         int size = N * N;
+        // Initialise all cells with -1 (no snake or ladder)
         int[] board = new int[size + 1];
         Arrays.fill(board, -1);
 
         Random rand = new Random();
 
+        // Number of ladders and snakes scales with board size
         int ladders = N - 2;
         int snakes = N - 2;
 
+        // Place ladders: start < end (moves player forward)
         for (int i = 0; i < ladders; i++) {
             int start = rand.nextInt(size - 1) + 1;
             int end = rand.nextInt(size - start) + start + 1;
             board[start] = end;
         }
 
+        // Place snakes: start > end (moves player backward)
         for (int i = 0; i < snakes; i++) {
             int start = rand.nextInt(size - 1) + 1;
             int end = rand.nextInt(start - 1) + 1;
