@@ -26,9 +26,7 @@ public class KnightTourDivideConquer {
 
         int half = N / 2;
 
-        // ── Step 1: define the four quadrant origins (top-left corners) ───
-        //   Q0 = top-left,    Q1 = top-right
-        //   Q2 = bottom-left, Q3 = bottom-right
+
         int[][] origins = {
                 {0,    0   },   // Q0
                 {0,    half},   // Q1
@@ -39,8 +37,6 @@ public class KnightTourDivideConquer {
         // ── Step 2: solve each quadrant on its own sub-board ──────────────
         int[][][] subBoards = new int[4][half][half];
 
-        // Starting corners chosen so the knight ends near the board centre
-        // (inner corner of each quadrant) — improves merge success rate.
         int[][] quadStarts = {
                 {half - 1, half - 1},   // Q0 inner corner
                 {half - 1, 0        },  // Q1 inner corner
@@ -57,8 +53,6 @@ public class KnightTourDivideConquer {
             }
         }
 
-        // ── Step 3: merge quadrants into the global board ─────────────────
-        //   Merge order: Q0 → Q1 → Q3 → Q2  (Z-pattern keeps borders close)
         int[] mergeOrder = {0, 1, 3, 2};
         int   offset     = 0;
 
